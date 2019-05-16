@@ -90,9 +90,13 @@ public class SheetsRecordCursor
         }
         // Populate incomplete columns with null
         String[] allFields = new String[columnHandles.size()];
+
         if (currentVals.size() > 0) {
-            for (int i = 0; i < currentVals.size(); i++) {
-                allFields[i] = String.valueOf(currentVals.get(i));
+            for (int i = 0; i < allFields.length; i++) {
+                int ordinalPos = columnHandles.get(i).getOrdinalPosition();
+                if (currentVals.size() > ordinalPos) {
+                    allFields[i] = String.valueOf(currentVals.get(ordinalPos));
+                }
             }
             fields = Arrays.asList(allFields);
         }
@@ -102,8 +106,7 @@ public class SheetsRecordCursor
     private String getFieldValue(int field)
     {
         checkState(fields != null, "Cursor has not been advanced yet");
-        int columnIndex = fieldToColumnIndex[field];
-        return fields.get(columnIndex);
+        return fields.get(field);
     }
 
     @Override
