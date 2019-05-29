@@ -41,7 +41,6 @@ public class TestSheetsConfig
                 .put("metadata-sheet-id", "foo_bar_sheet_id#Sheet1")
                 .put("sheets-data-expire-after-access-minutes", "2")
                 .put("sheets-data-expire-after-write-minutes", "10")
-                .put("autodetect-column-type", "true")
                 .build();
         SheetsConfig expected = new SheetsConfig()
                 .setCredentialsFilePath("/foo/bar/credentials.json")
