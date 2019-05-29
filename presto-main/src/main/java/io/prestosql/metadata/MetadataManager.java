@@ -26,6 +26,7 @@ import io.prestosql.connector.CatalogName;
 import io.prestosql.operator.aggregation.InternalAggregationFunction;
 import io.prestosql.operator.scalar.ScalarFunctionImplementation;
 import io.prestosql.operator.window.WindowFunctionSupplier;
+import io.prestosql.spi.NestedColumn;
 import io.prestosql.spi.PrestoException;
 import io.prestosql.spi.QueryId;
 import io.prestosql.spi.block.ArrayBlockEncoding;
@@ -475,6 +476,14 @@ public final class MetadataManager
             map.put(mapEntry.getKey().toLowerCase(ENGLISH), mapEntry.getValue());
         }
         return map.build();
+    }
+
+    @Override
+    public Map<NestedColumn, ColumnHandle> getNestedColumnHandles(Session session, TableHandle tableHandle, Collection<NestedColumn> dereferences)
+    {
+        CatalogName catalogName = tableHandle.getCatalogName();
+        ConnectorMetadata metadata = getMetadata(session, catalogName);
+        return metadata.getNestedColumnHandles(session.toConnectorSession(catalogName), tableHandle.getConnectorHandle(), dereferences);
     }
 
     @Override
