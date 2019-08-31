@@ -134,7 +134,6 @@ import io.prestosql.sql.planner.optimizations.ImplementIntersectAndExceptAsUnion
 import io.prestosql.sql.planner.optimizations.IndexJoinOptimizer;
 import io.prestosql.sql.planner.optimizations.LimitPushDown;
 import io.prestosql.sql.planner.optimizations.MergeNestedColumn;
-import io.prestosql.sql.planner.optimizations.MetadataDeleteOptimizer;
 import io.prestosql.sql.planner.optimizations.MetadataQueryOptimizer;
 import io.prestosql.sql.planner.optimizations.OptimizeMixedDistinctAggregations;
 import io.prestosql.sql.planner.optimizations.PlanOptimizer;
