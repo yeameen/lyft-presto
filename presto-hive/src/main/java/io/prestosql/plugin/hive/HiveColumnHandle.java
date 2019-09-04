@@ -70,6 +70,18 @@ public class HiveColumnHandle
             @JsonProperty("typeSignature") TypeSignature typeSignature,
             @JsonProperty("hiveColumnIndex") int hiveColumnIndex,
             @JsonProperty("columnType") ColumnType columnType,
+            @JsonProperty("comment") Optional<String> comment)
+    {
+        this(name, hiveType, typeSignature, hiveColumnIndex, columnType, comment, Optional.empty());
+    }
+
+    @JsonCreator
+    public HiveColumnHandle(
+            @JsonProperty("name") String name,
+            @JsonProperty("hiveType") HiveType hiveType,
+            @JsonProperty("typeSignature") TypeSignature typeSignature,
+            @JsonProperty("hiveColumnIndex") int hiveColumnIndex,
+            @JsonProperty("columnType") ColumnType columnType,
             @JsonProperty("comment") Optional<String> comment,
             @JsonProperty("nestedColumn") Optional<NestedColumn> nestedColumn)
     {

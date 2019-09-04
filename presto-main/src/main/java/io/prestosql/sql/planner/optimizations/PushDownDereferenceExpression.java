@@ -15,6 +15,7 @@ package io.prestosql.sql.planner.optimizations;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.prestosql.Session;
 import io.prestosql.execution.warnings.WarningCollector;
 import io.prestosql.metadata.Metadata;
@@ -129,7 +130,13 @@ public class PushDownDereferenceExpression
             for (Map.Entry<Symbol, AggregationNode.Aggregation> symbolAggregationEntry : node.getAggregations().entrySet()) {
                 Symbol symbol = symbolAggregationEntry.getKey();
                 AggregationNode.Aggregation oldAggregation = symbolAggregationEntry.getValue();
-                AggregationNode.Aggregation newAggregation = new AggregationNode.Aggregation(ExpressionTreeRewriter.rewriteWith(new DereferenceReplacer(expressionInfoMap), oldAggregation.getCall()), oldAggregation.getSignature(), oldAggregation.getMask());
+                ExpressionRewriter rewriter = new DereferenceReplacer(expressionInfoMap);
+                List<Expression> rewrittenArguments = Lists.newArrayListWithExpectedSize(oldAggregation.getArguments().size());
+                for (Expression argument : oldAggregation.getArguments()) {
+                    rewrittenArguments.add(ExpressionTreeRewriter.rewriteWith(rewriter, argument));
+                }
+
+                AggregationNode.Aggregation newAggregation = new AggregationNode.Aggregation(oldAggregation.getSignature(), rewrittenArguments, oldAggregation.isDistinct(), oldAggregation.getFilter(), oldAggregation.getOrderingScheme(), oldAggregation.getMask());
                 aggregations.put(symbol, newAggregation);
             }
             return new AggregationNode(
@@ -232,7 +239,8 @@ public class PushDownDereferenceExpression
                     joinNode.getLeftHashSymbol(),
                     joinNode.getRightHashSymbol(),
                     joinNode.getDistributionType(),
-                    joinNode.isSpillable());
+                    joinNode.isSpillable(),
+                    joinNode.getDynamicFilters());
         }
 
         @Override
