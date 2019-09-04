@@ -44,11 +44,6 @@ import io.prestosql.sql.tree.Expression;
 import io.prestosql.sql.tree.ExpressionRewriter;
 import io.prestosql.sql.tree.ExpressionTreeRewriter;
 
-import io.prestosql.sql.tree.FunctionCall;
-import io.prestosql.sql.tree.OrderBy;
-import io.prestosql.sql.tree.QualifiedName;
-import io.prestosql.sql.tree.SortItem;
-import io.prestosql.sql.tree.SymbolReference;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -60,11 +55,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static io.prestosql.sql.planner.optimizations.MergeNestedColumn.prefixExist;
-import static io.prestosql.sql.tree.SortItem.Ordering.ASCENDING;
-import static io.prestosql.sql.tree.SortItem.Ordering.DESCENDING;
 import static java.util.Objects.requireNonNull;
 
 public class PushDownDereferenceExpression
@@ -144,7 +136,7 @@ public class PushDownDereferenceExpression
                     rewrittenArguments.add(ExpressionTreeRewriter.rewriteWith(rewriter, argument));
                 }
 
-                AggregationNode.Aggregation newAggregation = new AggregationNode.Aggregation(oldAggregation.getSignature(),rewrittenArguments, oldAggregation.isDistinct(), oldAggregation.getFilter(), oldAggregation.getOrderingScheme(), oldAggregation.getMask());
+                AggregationNode.Aggregation newAggregation = new AggregationNode.Aggregation(oldAggregation.getSignature(), rewrittenArguments, oldAggregation.isDistinct(), oldAggregation.getFilter(), oldAggregation.getOrderingScheme(), oldAggregation.getMask());
                 aggregations.put(symbol, newAggregation);
             }
             return new AggregationNode(
@@ -247,7 +239,8 @@ public class PushDownDereferenceExpression
                     joinNode.getLeftHashSymbol(),
                     joinNode.getRightHashSymbol(),
                     joinNode.getDistributionType(),
-                    joinNode.isSpillable());
+                    joinNode.isSpillable(),
+                    joinNode.getDynamicFilters());
         }
 
         @Override
