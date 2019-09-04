@@ -68,7 +68,7 @@ public class TestingMetadata
         return tables;
     }
 
-    protected ConcurrentMap<SchemaTableName, String> getViews()
+    protected ConcurrentMap<SchemaTableName, ConnectorViewDefinition> getViews()
     {
         return views;
     }

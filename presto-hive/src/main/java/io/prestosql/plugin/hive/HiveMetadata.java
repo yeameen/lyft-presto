@@ -109,6 +109,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -663,7 +664,7 @@ public class HiveMetadata
             return ImmutableMap.of();
         }
 
-        SchemaTableName tableName = schemaTableName(tableHandle);
+        SchemaTableName tableName = ((HiveTableHandle) tableHandle).getSchemaTableName();
         Optional<Table> table = metastore.getTable(tableName.getSchemaName(), tableName.getTableName());
 
         if (!table.isPresent()) {
