@@ -292,7 +292,7 @@ public class IcebergPageSourceProvider
                 Integer id = icebergNameToId.get(name);
                 if (parquetIdToName.containsKey(id)) {
                     String parquetName = parquetIdToName.get(id);
-                    HiveColumnHandle columnHandle = new HiveColumnHandle(parquetName, column.getHiveType(), column.getTypeSignature(), column.getHiveColumnIndex(), column.getColumnType(), column.getComment());
+                    HiveColumnHandle columnHandle = new HiveColumnHandle(parquetName, column.getHiveType(), column.getTypeSignature(), column.getHiveColumnIndex(), column.getColumnType(), column.getComment(), Optional.empty());
                     builder.put(name, columnHandle);
                 }
                 else {
