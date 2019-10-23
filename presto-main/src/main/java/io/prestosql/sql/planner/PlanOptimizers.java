@@ -74,6 +74,8 @@ import io.prestosql.sql.planner.iterative.rule.PruneSemiJoinColumns;
 import io.prestosql.sql.planner.iterative.rule.PruneSemiJoinFilteringSourceColumns;
 import io.prestosql.sql.planner.iterative.rule.PruneTableScanColumns;
 import io.prestosql.sql.planner.iterative.rule.PruneTopNColumns;
+import io.prestosql.sql.planner.iterative.rule.PruneUnnestProjection;
+import io.prestosql.sql.planner.iterative.rule.PruneUnnestTableScan;
 import io.prestosql.sql.planner.iterative.rule.PruneValuesColumns;
 import io.prestosql.sql.planner.iterative.rule.PruneWindowColumns;
 import io.prestosql.sql.planner.iterative.rule.PushAggregationThroughOuterJoin;
@@ -398,7 +400,9 @@ public class PlanOptimizers
                                 new InlineProjections(),
                                 new RemoveRedundantIdentityProjections(),
                                 new TransformCorrelatedSingleRowSubqueryToProject(),
-                                new RemoveAggregationInSemiJoin())),
+                                new RemoveAggregationInSemiJoin(),
+                                new PruneUnnestProjection(metadata),
+                                new PruneUnnestTableScan(metadata))),
                 new CheckSubqueryNodesAreRewritten(),
 
                 // pushdown dereference
