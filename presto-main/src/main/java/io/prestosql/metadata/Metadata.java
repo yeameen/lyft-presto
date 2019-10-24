@@ -472,6 +472,4 @@ public interface Metadata
     ColumnPropertyManager getColumnPropertyManager();
 
     AnalyzePropertyManager getAnalyzePropertyManager();
-
-    Map<String, ColumnHandle> getNestedColumnHandles(Session session, TableHandle tableHandle, Map<String, List<String>> dereferences, Map<String, Type> projectionTypes);
 }

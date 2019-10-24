@@ -25,7 +25,6 @@ import io.prestosql.spi.security.RoleGrant;
 import io.prestosql.spi.statistics.ComputedStatistics;
 import io.prestosql.spi.statistics.TableStatistics;
 import io.prestosql.spi.statistics.TableStatisticsMetadata;
-import io.prestosql.spi.type.Type;
 
 import javax.annotation.Nullable;
 
@@ -796,11 +795,6 @@ public interface ConnectorMetadata
     }
 
     default Map<NestedColumn, ColumnHandle> getNestedColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle, Collection<NestedColumn> dereferences)
-    {
-        return new HashMap<>();
-    }
-
-    default Map<String, ColumnHandle> getNestedColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle, Map<String, List<String>> dereferences, Map<String, Type> projectionTypes)
     {
         return new HashMap<>();
     }

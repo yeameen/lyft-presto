@@ -50,7 +50,6 @@ import io.prestosql.spi.security.RoleGrant;
 import io.prestosql.spi.statistics.ComputedStatistics;
 import io.prestosql.spi.statistics.TableStatistics;
 import io.prestosql.spi.statistics.TableStatisticsMetadata;
-import io.prestosql.spi.type.Type;
 
 import java.util.Collection;
 import java.util.List;
@@ -649,14 +648,6 @@ public class ClassLoaderSafeConnectorMetadata
     {
         try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(classLoader)) {
             return delegate.getNestedColumnHandles(session, tableHandle, dereferences);
-        }
-    }
-
-    @Override
-    public Map<String, ColumnHandle> getNestedColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle, Map<String, List<String>> dereferences, Map<String, Type> projectionTypes)
-    {
-        try (ThreadContextClassLoader ignored = new ThreadContextClassLoader(classLoader)) {
-            return delegate.getNestedColumnHandles(session, tableHandle, dereferences, projectionTypes);
         }
     }
 }

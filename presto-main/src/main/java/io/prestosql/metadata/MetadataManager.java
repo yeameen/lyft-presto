@@ -487,14 +487,6 @@ public final class MetadataManager
     }
 
     @Override
-    public Map<String, ColumnHandle> getNestedColumnHandles(Session session, TableHandle tableHandle, Map<String, List<String>> dereferences, Map<String, Type> projectionTypes)
-    {
-        CatalogName catalogName = tableHandle.getCatalogName();
-        ConnectorMetadata metadata = getMetadata(session, catalogName);
-        return metadata.getNestedColumnHandles(session.toConnectorSession(catalogName), tableHandle.getConnectorHandle(), dereferences, projectionTypes);
-    }
-
-    @Override
     public ColumnMetadata getColumnMetadata(Session session, TableHandle tableHandle, ColumnHandle columnHandle)
     {
         requireNonNull(tableHandle, "tableHandle is null");
