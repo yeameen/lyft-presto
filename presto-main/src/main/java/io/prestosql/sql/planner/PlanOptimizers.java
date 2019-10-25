@@ -250,8 +250,7 @@ public class PlanOptimizers
         Set<Rule<?>> projectionPushdownRules = ImmutableSet.of(
                 new PushProjectionIntoTableScan(metadata, typeAnalyzer),
                 new PushProjectionThroughUnion(),
-                new PushProjectionThroughExchange()
-                );
+                new PushProjectionThroughExchange());
 
         IterativeOptimizer inlineProjections = new IterativeOptimizer(
                 ruleStats,

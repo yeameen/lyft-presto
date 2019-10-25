@@ -803,5 +803,4 @@ public interface ConnectorMetadata
     {
         return new HashMap<>();
     }
-
 }
