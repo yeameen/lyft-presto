@@ -487,11 +487,11 @@ public final class MetadataManager
     }
 
     @Override
-    public Map<String, ColumnHandle> getNestedColumnHandles(Session session, TableHandle tableHandle, Map<String, List<String>> dereferences, Map<String, Type> projectionTypes)
+    public Map<String, ColumnHandle> getNestedColumnHandles(Session session, TableHandle tableHandle, Map<String, List<String>> dereferences)
     {
         CatalogName catalogName = tableHandle.getCatalogName();
         ConnectorMetadata metadata = getMetadata(session, catalogName);
-        return metadata.getNestedColumnHandles(session.toConnectorSession(catalogName), tableHandle.getConnectorHandle(), dereferences, projectionTypes);
+        return metadata.getNestedColumnHandles(session.toConnectorSession(catalogName), tableHandle.getConnectorHandle(), dereferences);
     }
 
     @Override
