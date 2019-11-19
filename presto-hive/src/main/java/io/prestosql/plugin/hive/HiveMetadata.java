@@ -17,7 +17,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.base.VerifyException;
 import com.google.common.collect.ImmutableList;
@@ -87,8 +86,6 @@ import io.prestosql.spi.statistics.TableStatisticsMetadata;
 import io.prestosql.spi.type.Type;
 import io.prestosql.spi.type.TypeManager;
 import io.prestosql.spi.type.VarcharType;
-import java.util.Arrays;
-import java.util.Collections;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
@@ -104,7 +101,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -715,11 +714,12 @@ public class HiveMetadata
             String[] nestedColumnNames = columnName.split("\\.");
             if (nestedColumnNames.length == 0) {
                 nonNestedColumns.add(columnName);
-            } else {
+            }
+            else {
                 NestedColumn nestedColumn = new NestedColumn(Arrays.asList(nestedColumnNames));
                 Map<NestedColumn, ColumnHandle> nestedColumnColumnHandleMap = getNestedColumnHandles(session, tableHandle, Collections.singletonList(nestedColumn));
                 for (ColumnHandle handle : nestedColumnColumnHandleMap.values()) {
-                    nestedHiveColumnHandles.add((HiveColumnHandle)handle);
+                    nestedHiveColumnHandles.add((HiveColumnHandle) handle);
                 }
             }
         }
