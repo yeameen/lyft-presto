@@ -25,6 +25,7 @@ import io.prestosql.metadata.QualifiedObjectName;
 import io.prestosql.metadata.TableHandle;
 import io.prestosql.metadata.TableMetadata;
 import io.prestosql.spi.connector.CatalogSchemaTableName;
+import io.prestosql.spi.connector.ColumnHandle;
 import io.prestosql.spi.connector.ColumnMetadata;
 import io.prestosql.spi.connector.ConnectorSession;
 import io.prestosql.spi.connector.Constraint;
@@ -45,6 +46,7 @@ import io.prestosql.spi.type.TypeSignature;
 import io.prestosql.spi.type.VarcharType;
 import io.prestosql.sql.planner.Plan;
 import io.prestosql.sql.planner.plan.ExchangeNode;
+import io.prestosql.sql.planner.plan.TableScanNode;
 import io.prestosql.sql.planner.planprinter.IoPlanPrinter.ColumnConstraint;
 import io.prestosql.sql.planner.planprinter.IoPlanPrinter.EstimatedStatsAndCost;
 import io.prestosql.sql.planner.planprinter.IoPlanPrinter.FormattedDomain;
@@ -64,6 +66,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -169,7 +172,7 @@ public class TestHiveIntegrationSmokeTest
         assertUpdate(admin, "insert into nest_test values(1, array[row('a','b')])", 1);
         assertUpdate(admin, "insert into nest_test values(2, array[row('b','c')])", 1);
         assertUpdate(admin, "insert into nest_test values(3, array[row('d','e')])", 1);
-        assertQuery(admin, "select t.x from nest_test cross join unnest(a) as t", "select * from unnest(array['a','b','d'])");
+        assertQuery(admin, "select t.x from nest_test cross join unnest(a) as t", "select * from unnest(array['a','b','d'])", assertPrunedLayout("array<struct<x:string>>"));
         assertUpdate(admin, "DROP TABLE nest_test");
     }
 
@@ -183,8 +186,48 @@ public class TestHiveIntegrationSmokeTest
         assertUpdate(admin, "insert into nest_test(id,b) values(1, array[row(array[row('a','b')],array[row('c','d')])])", 1);
         assertUpdate(admin, "insert into nest_test(id,b) values(2, array[row(array[row('e','f')],array[row('g','h')])])", 1);
         assertUpdate(admin, "insert into nest_test(id,b) values(3, array[row(array[row('i','j')],array[row('k','l')])])", 1);
-        assertQuery(admin, "select x from (select a from nest_test cross join unnest(b)) cross join unnest(a)", "select * from unnest(array['a','e','i'])");
+        assertQuery(admin, "select x from (select a from nest_test cross join unnest(b)) cross join unnest(a)", "select * from unnest(array['a','e','i'])", assertPrunedLayout("array<struct<a:array<struct<x:string,y:string>>>>"));
         assertUpdate(admin, "DROP TABLE nest_test");
+    }
+
+    @Test
+    public void testMultiNestedColumnUnnestWithTableScan()
+    {
+        Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
+                .build();
+        assertUpdate(
+                admin,
+                "create table nest_test(\n"
+                        + "id integer,\n"
+                        + "a varchar,\n"
+                        + "b varchar,\n"
+                        + "h row (\n"
+                        + "  c array(row(d array(row(x varchar, y varchar)),e array(row(x varchar, y varchar)))),\n"
+                        + "  f array(row(g array(row(x varchar, y varchar))))))\n"
+                        + "WITH (format='PARQUET')");
+        assertUpdate(admin, "insert into nest_test(id,h) values(1, row(array[row(array[row('a','b')],array[row('c','d')])],array[row(array[row('a','b')])]))", 1);
+        assertUpdate(admin, "insert into nest_test(id,h) values(2, row(array[row(array[row('e','f')],array[row('g','h')])],array[row(array[row('a','b')])]))", 1);
+        assertUpdate(admin, "insert into nest_test(id,h) values(3, row(array[row(array[row('i','j')],array[row('k','l')])],array[row(array[row('a','b')])]))", 1);
+        assertQuery(admin, "select x from (select d from nest_test cross join unnest(h.c)) cross join unnest(d)", "select * from unnest(array['a','e','i'])", assertPrunedLayout("array<struct<d:array<struct<x:string,y:string>>>>"));
+        assertUpdate(admin, "DROP TABLE nest_test");
+    }
+
+    private Consumer<Plan> assertPrunedLayout(String expectedType)
+    {
+        return plan ->
+        {
+            Optional<TableScanNode> tableScanNode = searchFrom(plan.getRoot())
+                    .where(node -> node instanceof TableScanNode)
+                    .findFirst();
+            assertTrue(tableScanNode.isPresent(), "Expected to find TableScanNode in " + plan);
+            Collection<ColumnHandle> handles = tableScanNode.get().getAssignments().values();
+            assertEquals(1, handles.size(), "Expected single assignment in TableScanNode " + tableScanNode.get());
+            ColumnHandle handle = handles.iterator().next();
+            assertTrue(handle instanceof HiveColumnHandle, "Expected column handle to be of type HiveColumnHandle");
+            HiveColumnHandle hiveHandle = (HiveColumnHandle) handle;
+            assertEquals(expectedType, hiveHandle.getHiveType().toString());
+        };
     }
 
     @Test

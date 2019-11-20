@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.airlift.json.JsonCodec;
@@ -100,7 +101,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -704,10 +707,26 @@ public class HiveMetadata
             throw new TableNotFoundException(tableName);
         }
 
-        Set<String> listOfColumns = dereferences.keySet();
+        Set<String> allColumns = dereferences.keySet();
+        Set<String> nonNestedColumns = Sets.newHashSetWithExpectedSize(allColumns.size());
+        List<HiveColumnHandle> nestedHiveColumnHandles = Lists.newArrayListWithExpectedSize(allColumns.size());
+        for (String columnName : allColumns) {
+            String[] nestedColumnNames = columnName.split("\\.");
+            if (nestedColumnNames.length == 0) {
+                nonNestedColumns.add(columnName);
+            }
+            else {
+                NestedColumn nestedColumn = new NestedColumn(Arrays.asList(nestedColumnNames));
+                Map<NestedColumn, ColumnHandle> nestedColumnColumnHandleMap = getNestedColumnHandles(session, tableHandle, Collections.singletonList(nestedColumn));
+                for (ColumnHandle handle : nestedColumnColumnHandleMap.values()) {
+                    nestedHiveColumnHandles.add((HiveColumnHandle) handle);
+                }
+            }
+        }
         List<HiveColumnHandle> regularHiveColumnHandles = getRegularColumnHandles(table.get()).stream()
-                .filter(x -> listOfColumns.contains(x.getName()))
+                .filter(x -> nonNestedColumns.contains(x.getName()))
                 .collect(toList());
+        regularHiveColumnHandles.addAll(nestedHiveColumnHandles);
 
         if (regularHiveColumnHandles.isEmpty()) {
             return ImmutableMap.of();
@@ -739,6 +758,7 @@ public class HiveMetadata
                 }
             }
             HiveType hiveType = HiveType.valueOf("array<struct<" + String.join(",", content.build()) + ">>");
+
             columnHandles.put(
                     hiveColumnHandle.getName(),
                     new HiveColumnHandle(
@@ -748,7 +768,7 @@ public class HiveMetadata
                             hiveColumnHandle.getHiveColumnIndex(),
                             REGULAR,
                             hiveColumnHandle.getComment(),
-                            Optional.empty()));
+                            hiveColumnHandle.getNestedColumn()));
         }
         return columnHandles.build();
     }
