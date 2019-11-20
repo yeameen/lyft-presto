@@ -45,8 +45,8 @@ import io.prestosql.sql.planner.plan.TableScanNode;
 import io.prestosql.sql.planner.plan.UnnestNode;
 import io.prestosql.sql.tree.Expression;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -162,8 +162,8 @@ public class PushProjectionThroughUnnest
      * Input:
      *     unnestNode = Unnest[replicate=a, unnest=c:array(row(c1,c2,c3,c4,c5))]
      *     usedUnnestSymbols = Map {"c":["c1","c3"]}
-     *
      * Output:
+     *
      * Map{
      *     c: {
      *         c' : array(row(c1,c3)) : [c1, c3]
@@ -316,7 +316,8 @@ public class PushProjectionThroughUnnest
         BiMap<Symbol, String> mapBetweenSymbolAndTypeName = getOriginalName(tableScanNode, unnestNode, usedUnnestSymbols, context.getSession(), tableScanNode.getTable());
 
         // Get new ColumnHandles using the Metadata API
-        Map<String, ColumnHandle> prunedColumnHandles = metadata.getNestedColumnHandles(context.getSession(), tableScanNode.getTable(), transform(usedUnnestSymbols, mapBetweenSymbolAndTypeName));
+        Map<String, List<String>> transformedSymbols = transform(usedUnnestSymbols, mapBetweenSymbolAndTypeName);
+        Map<String, ColumnHandle> prunedColumnHandles = metadata.getNestedColumnHandles(context.getSession(), tableScanNode.getTable(), transformedSymbols);
         if (prunedColumnHandles.isEmpty()) {
             return Result.empty();
         }
@@ -324,27 +325,22 @@ public class PushProjectionThroughUnnest
         // Generate new Symbols
         Map<Symbol, SymbolSet> newSymbols = generateNewSymbols(context.getSymbolAllocator().getTypes(), context.getSymbolAllocator(), unnestNode, usedUnnestSymbols, mapBetweenSymbolAndTypeName);
 
-        // Rewrite assignments in tableScanNode
         Map<Symbol, ColumnHandle> assignments = tableScanNode.getAssignments();
-        ImmutableMap.Builder<Symbol, ColumnHandle> newAssignmentBuilder = ImmutableMap.builder();
+        Map<Symbol, ColumnHandle> columnHandleBuilder = new HashMap<>(assignments);
+        // Rewrite assignments in tableScanNode
         for (Map.Entry<Symbol, ColumnHandle> entry : assignments.entrySet()) {
             if (newSymbols.containsKey(entry.getKey())) {
-                newAssignmentBuilder.put(
+                columnHandleBuilder.put(
                         newSymbols.get(entry.getKey()).getSymbol(),
                         prunedColumnHandles.get(mapBetweenSymbolAndTypeName.get(entry.getKey())));
             }
-            else {
-                newAssignmentBuilder.put(entry);
-            }
         }
-        Map<Symbol, ColumnHandle> newAssignments = newAssignmentBuilder.build();
-
         // Rewrite tableScanNode
         TableScanNode newTableScanNode = new TableScanNode(
                 context.getIdAllocator().getNextId(),
                 tableScanNode.getTable(),
-                new ArrayList<>(newAssignments.keySet()),
-                newAssignments,
+                ImmutableList.copyOf(columnHandleBuilder.keySet()),
+                columnHandleBuilder,
                 tableScanNode.getEnforcedConstraint());
         // Rewrite UnnestNode
         PlanNode newUnnestNode = new UnnestNode(

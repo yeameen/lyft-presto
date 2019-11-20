@@ -250,7 +250,8 @@ public class PlanOptimizers
         Set<Rule<?>> projectionPushdownRules = ImmutableSet.of(
                 new PushProjectionIntoTableScan(metadata, typeAnalyzer),
                 new PushProjectionThroughUnion(),
-                new PushProjectionThroughExchange());
+                new PushProjectionThroughExchange(),
+                new PushProjectionThroughUnnest(metadata, typeAnalyzer));
 
         IterativeOptimizer inlineProjections = new IterativeOptimizer(
                 ruleStats,
@@ -399,8 +400,7 @@ public class PlanOptimizers
                                 new InlineProjections(),
                                 new RemoveRedundantIdentityProjections(),
                                 new TransformCorrelatedSingleRowSubqueryToProject(),
-                                new RemoveAggregationInSemiJoin(),
-                                new PushProjectionThroughUnnest(metadata, typeAnalyzer))),
+                                new RemoveAggregationInSemiJoin())),
                 new CheckSubqueryNodesAreRewritten(),
 
                 // pushdown dereference
