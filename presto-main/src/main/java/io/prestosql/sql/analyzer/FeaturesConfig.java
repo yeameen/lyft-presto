@@ -134,6 +134,7 @@ public class FeaturesConfig
     private DataSize filterAndProjectMinOutputPageSize = new DataSize(500, KILOBYTE);
     private int filterAndProjectMinOutputPageRowCount = 256;
     private int maxGroupingSets = 2048;
+    private boolean queryPartitionFilterRequired;
 
     public enum JoinReorderingStrategy
     {
@@ -995,9 +996,20 @@ public class FeaturesConfig
     }
 
     @Config("optimizer.ignore-downstream-preferences")
-    public FeaturesConfig setIgnoreDownstreamPreferences(boolean ignoreDownstreamPreferences)
-    {
+    public FeaturesConfig setIgnoreDownstreamPreferences(boolean ignoreDownstreamPreferences) {
         this.ignoreDownstreamPreferences = ignoreDownstreamPreferences;
         return this;
+    }
+
+    @Config("query-partition-filter-required")
+    public FeaturesConfig setQueryPartitionFilterRequired(boolean queryPartitionFilterRequired)
+    {
+        this.queryPartitionFilterRequired = queryPartitionFilterRequired;
+        return this;
+    }
+
+    public boolean isQueryPartitionFilterRequired()
+    {
+        return queryPartitionFilterRequired;
     }
 }

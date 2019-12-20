@@ -125,6 +125,7 @@ public final class SystemSessionProperties
     public static final String DYNAMIC_FILTERING_MAX_PER_DRIVER_ROW_COUNT = "dynamic_filtering_max_per_driver_row_count";
     public static final String DYNAMIC_FILTERING_MAX_PER_DRIVER_SIZE = "dynamic_filtering_max_per_driver_size";
     public static final String IGNORE_DOWNSTREAM_PREFERENCES = "ignore_downstream_preferences";
+    public static final String QUERY_PARTITION_FILTER_REQUIRED = "query_partition_filter_required";
 
     private final List<PropertyMetadata<?>> sessionProperties;
 
@@ -552,6 +553,11 @@ public final class SystemSessionProperties
                         IGNORE_DOWNSTREAM_PREFERENCES,
                         "Ignore Parent's PreferredProperties in AddExchange optimizer",
                         featuresConfig.isIgnoreDownstreamPreferences(),
+                false),
+                booleanProperty(
+                        QUERY_PARTITION_FILTER_REQUIRED,
+                        "Require filter on partition column",
+                        featuresConfig.isQueryPartitionFilterRequired(),
                         false));
     }
 
@@ -996,16 +1002,20 @@ public final class SystemSessionProperties
                 DataSize::toString);
     }
 
-    private static PropertyMetadata<Duration> durationProperty(String name, String description, Duration defaultValue, boolean hidden)
-    {
+    private static PropertyMetadata<Duration> durationProperty(String name, String description, Duration defaultValue, boolean hidden) {
         return new PropertyMetadata<>(
-                name,
-                description,
-                VARCHAR,
-                Duration.class,
-                defaultValue,
-                hidden,
-                value -> Duration.valueOf((String) value),
-                Duration::toString);
+            name,
+            description,
+            VARCHAR,
+            Duration.class,
+            defaultValue,
+            hidden,
+            value -> Duration.valueOf((String) value),
+            Duration::toString);
+    }
+
+    public static boolean isQueryPartitionFilterRequired(Session session)
+    {
+        return session.getSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, Boolean.class);
     }
 }
