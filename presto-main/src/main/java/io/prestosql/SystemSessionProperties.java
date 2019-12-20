@@ -1002,16 +1002,17 @@ public final class SystemSessionProperties
                 DataSize::toString);
     }
 
-    private static PropertyMetadata<Duration> durationProperty(String name, String description, Duration defaultValue, boolean hidden) {
+    private static PropertyMetadata<Duration> durationProperty(String name, String description, Duration defaultValue, boolean hidden)
+    {
         return new PropertyMetadata<>(
-            name,
-            description,
-            VARCHAR,
-            Duration.class,
-            defaultValue,
-            hidden,
-            value -> Duration.valueOf((String) value),
-            Duration::toString);
+                name,
+                description,
+                VARCHAR,
+                Duration.class,
+                defaultValue,
+                hidden,
+                value -> Duration.valueOf((String) value),
+                Duration::toString);
     }
 
     public static boolean isQueryPartitionFilterRequired(Session session)

@@ -996,7 +996,8 @@ public class FeaturesConfig
     }
 
     @Config("optimizer.ignore-downstream-preferences")
-    public FeaturesConfig setIgnoreDownstreamPreferences(boolean ignoreDownstreamPreferences) {
+    public FeaturesConfig setIgnoreDownstreamPreferences(boolean ignoreDownstreamPreferences)
+    {
         this.ignoreDownstreamPreferences = ignoreDownstreamPreferences;
         return this;
     }
