@@ -33,6 +33,7 @@ class LyftOktaAuthenticationHandler
         extends AbstractHandler
 {
     private static final String REDIRECT_URI = "http://localhost:5000/authorization-code/callback";
+    private static final String STATE = "LOGIN";
 
     private static final String CLIENT_ID = "0oacleef3oX94aQxj1t7";
     private static final String CLIENT_SECRET = "WEwnl6HTSZbwBak5UGuXbq1ygc7SxLxGzMONL-4k";
@@ -44,7 +45,8 @@ class LyftOktaAuthenticationHandler
             + "client_id=" + CLIENT_ID + "&"
             + "redirect_uri=" + REDIRECT_URI + "&"
             + "response_type=code&"
-            + "scope=openid";
+            + "scope=openid&"
+            + "state=" + STATE;
 
     private Server server;
     private User user;
