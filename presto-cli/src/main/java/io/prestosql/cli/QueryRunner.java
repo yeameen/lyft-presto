@@ -16,6 +16,7 @@ package io.prestosql.cli;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HostAndPort;
+import io.airlift.log.Logger;
 import io.prestosql.client.ClientSession;
 import io.prestosql.client.SocketChannelSocketFactory;
 import io.prestosql.client.StatementClient;
@@ -27,7 +28,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
@@ -60,6 +60,8 @@ public class QueryRunner
     private final boolean debug;
     private final OkHttpClient httpClient;
     private final Consumer<OkHttpClient.Builder> sslSetup;
+
+    private static final Logger log = Logger.get(QueryRunner.class);
 
     public QueryRunner(
             ClientSession session,
@@ -187,7 +189,7 @@ public class QueryRunner
             ClientSession session,
             boolean useOkta) {
         if (useOkta) {
-            System.out.println("Asking for okta authentication");
+            log.info("Asking for okta authentication");
             User user = new User();
             Server server = new Server(5000);
             server.setHandler(new AuthenticationHandler(server, user));
@@ -201,8 +203,8 @@ public class QueryRunner
                 desktop.browse(loginUrl);
 
                 server.join();
-                System.out.println("Server exited");
-                System.out.println("Access Token: " + user.getAccessToken());
+                log.info("Received Access Token. Exiting Jetty Server");
+                log.info("Access Token: " + user.getAccessToken());
                 // TODO: This should set access token
                 setupTokenAuth(clientBuilder, session, Optional.ofNullable(user.getAccessToken()));
             } catch (Exception e) {
@@ -239,23 +241,23 @@ class AuthenticationHandler extends AbstractHandler {
     String REDIRECT_URI = "http://localhost:5000/authorization-code/callback";
 
     String AUDIENCE = "api://default";
-    String STATE = "SomeState";
 
     String CLIENT_ID = "0oacleef3oX94aQxj1t7";
     String CLIENT_SECRET = "WEwnl6HTSZbwBak5UGuXbq1ygc7SxLxGzMONL-4k";
     String BASE_URL = "https://lyft.okta.com";
     String ISSUER = BASE_URL + "/oauth2/default";
-    String TOKEN_ENDPOINT = BASE_URL + "/oauth2/default/v1/token";
-    String LOGIN_ENDPOINT = BASE_URL + "/oauth2/default/v1/authorize";
+    String TOKEN_ENDPOINT = ISSUER + "/v1/token";
+    String LOGIN_ENDPOINT = ISSUER + "/v1/authorize";
     String LOGIN_URL = LOGIN_ENDPOINT + "?"
             + "client_id=" + CLIENT_ID + "&"
             + "redirect_uri=" + REDIRECT_URI + "&"
             + "response_type=code&"
-            + "scope=openid&"
-            + "state=" + STATE;
+            + "scope=openid";
 
     private Server server;
     private User user;
+
+    private static final Logger log = Logger.get(AuthenticationHandler.class);
 
     AuthenticationHandler(Server server, User user) {
         this.server = server;
@@ -267,7 +269,7 @@ class AuthenticationHandler extends AbstractHandler {
                        Request baseRequest,
                        HttpServletRequest request,
                        HttpServletResponse response)
-            throws IOException, ServletException {
+            throws IOException {
         baseRequest.setHandled(true);
 
         if (target.equalsIgnoreCase("/hello")) {
@@ -320,7 +322,6 @@ class AuthenticationHandler extends AbstractHandler {
 
         response.getWriter().println("<a onclick='window.close();'>Close Window</a>");
 
-//        response.getWriter().println("<p>Stopping the server</p>");
         response.flushBuffer(); // Necessary to show output on the screen
 
         // Set the user
@@ -330,16 +331,16 @@ class AuthenticationHandler extends AbstractHandler {
         try {
             new Thread(() -> {
                 try {
-                    System.out.println("Shutting down Jetty...");
+                    log.info("Shutting down Jetty...");
                     server.stop();
-                    System.out.println("Jetty has stopped.");
+                    log.info("Jetty has stopped.");
                 } catch (Exception ex) {
-                    System.out.println("Error when stopping Jetty: " + ex.getMessage());
+                    log.warn("Error when stopping Jetty: " + ex.getMessage());
                 }
             }).start();
 
         } catch (Exception e) {
-            System.out.println("Cannot stop server");
+            log.warn("Cannot stop server");
             e.printStackTrace();
         }
     }
