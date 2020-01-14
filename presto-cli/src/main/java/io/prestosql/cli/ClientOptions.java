@@ -47,8 +47,8 @@ public class ClientOptions
     private static final Splitter NAME_VALUE_SPLITTER = Splitter.on('=').limit(2);
     private static final CharMatcher PRINTABLE_ASCII = CharMatcher.inRange((char) 0x21, (char) 0x7E); // spaces are not allowed
 
-    @Option(name = "--server", title = "server", description = "Presto server location (default: localhost:8080)")
-    public String server = "localhost:8080";
+    @Option(name = "--server", title = "server", description = "Presto server location (default: https://prestoproxy-production.lyft.net)")
+    public String server = "https://prestoproxy-production.lyft.net";
 
     @Option(name = "--krb5-service-principal-pattern", title = "krb5 remote service principal pattern", description = "Remote kerberos service principal pattern (default: ${SERVICE}@${HOST})")
     public String krb5ServicePrincipalPattern = "${SERVICE}@${HOST}";
@@ -91,6 +91,9 @@ public class ClientOptions
 
     @Option(name = "--password", title = "password", description = "Prompt for password")
     public boolean password;
+
+    @Option(name = "--use-okta", title = "Okta login", description = "OpenID login with Okta")
+    public boolean useOkta = true;
 
     @Option(name = "--source", title = "source", description = "Name of source making query")
     public String source = "presto-cli";
