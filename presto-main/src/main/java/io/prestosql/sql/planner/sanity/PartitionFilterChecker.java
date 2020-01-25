@@ -13,13 +13,15 @@
  */
 package io.prestosql.sql.planner.sanity;
 
-import com.google.common.base.VerifyException;
 import io.prestosql.Session;
 import io.prestosql.execution.warnings.WarningCollector;
 import io.prestosql.metadata.Metadata;
 import io.prestosql.metadata.TableHandle;
 import io.prestosql.metadata.TableProperties;
+import io.prestosql.spi.PrestoException;
+import io.prestosql.spi.StandardErrorCode;
 import io.prestosql.spi.connector.ColumnHandle;
+import io.prestosql.spi.connector.SchemaTableName;
 import io.prestosql.sql.planner.TypeAnalyzer;
 import io.prestosql.sql.planner.TypeProvider;
 import io.prestosql.sql.planner.plan.PlanNode;
@@ -58,8 +60,11 @@ public class PartitionFilterChecker
                 TableHandle table = node.getTable();
                 List<ColumnHandle> partitionColumns = getPartitionColumns(table);
                 if (!partitionColumns.isEmpty() && node.getEnforcedConstraint().isAll()) {
+                    SchemaTableName schemaTableName = metadata.getTableMetadata(session, table).getTable();
                     String partitionColumnNames = partitionColumns.stream().map(n -> metadata.getColumnMetadata(session, table, n).getName()).collect(Collectors.joining(","));
-                    throw new VerifyException("Filter on partition column required: " + partitionColumnNames);
+                    throw new PrestoException(
+                            StandardErrorCode.QUERY_REJECTED,
+                            String.format("Filter required on %s.%s for at least one partition column: %s ", schemaTableName.getSchemaName(), schemaTableName.getTableName(), partitionColumnNames));
                 }
                 return null;
             }
@@ -67,12 +72,8 @@ public class PartitionFilterChecker
             private List<ColumnHandle> getPartitionColumns(TableHandle handle)
             {
                 TableProperties properties = metadata.getTableProperties(session, handle);
-                if (properties.getTablePartitioning().isPresent()
-                        && !properties.getTablePartitioning().get().getPartitioningColumns().isEmpty()) {
-                    return properties.getTablePartitioning().get().getPartitioningColumns();
-                }
                 if (properties.getDiscretePredicates().isPresent()
-                                && !properties.getDiscretePredicates().get().getColumns().isEmpty()) {
+                        && !properties.getDiscretePredicates().get().getColumns().isEmpty()) {
                     return properties.getDiscretePredicates().get().getColumns();
                 }
                 return Collections.emptyList();

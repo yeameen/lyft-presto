@@ -248,7 +248,7 @@ public class TestHiveIntegrationSmokeTest
                         + "ds varchar)"
                         + "WITH (format='PARQUET', partitioned_by = ARRAY['ds'])");
         assertUpdate(admin, "insert into partition_test(id,a,ds) values(1, 'a','a')", 1);
-        assertQueryFails(admin, "select id from partition_test where a = 'a'", "Filter on partition column required.*");
+        assertQueryFails(admin, "select id from partition_test where a = 'a'", "Filter required on tpch\\.partition_test for at least one partition column:.*");
         assertUpdate(admin, "DROP TABLE partition_test");
     }
 
@@ -269,7 +269,7 @@ public class TestHiveIntegrationSmokeTest
                         + "ds varchar)"
                         + "WITH (format='PARQUET', partitioned_by = ARRAY['ds'])");
         assertUpdate(admin, "insert into partition_test(id,a,ds) values(1, 'a','a')", 1);
-        assertQueryFails(admin, "select id from partition_test where ds is not null or ds is null", "Filter on partition column required.*");
+        assertQueryFails(admin, "select id from partition_test where ds is not null or ds is null", "Filter required on tpch\\.partition_test for at least one partition column:.*");
         assertUpdate(admin, "DROP TABLE partition_test");
     }
 
@@ -372,7 +372,7 @@ public class TestHiveIntegrationSmokeTest
                         + "WITH (format='PARQUET', partitioned_by = ARRAY['ds'])");
         assertUpdate(admin, "insert into partition_test1(id,a,ds) values(1, 'a','a')", 1);
         assertUpdate(admin, "insert into partition_test2(id,a,ds) values(1, 'a','a')", 1);
-        assertQueryFails(admin, "select a.id, b.id from partition_test1 a join partition_test2 b on (a.id = b.id) where a.ds = 'a'", "Filter on partition column required.*");
+        assertQueryFails(admin, "select a.id, b.id from partition_test1 a join partition_test2 b on (a.id = b.id) where a.ds = 'a'", "Filter required on tpch\\.partition_test2 for at least one partition column:.*");
         assertUpdate(admin, "DROP TABLE partition_test1");
         assertUpdate(admin, "DROP TABLE partition_test2");
     }
