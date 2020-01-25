@@ -350,7 +350,6 @@ public class SqlQueryExecution
             }
             catch (Throwable e) {
                 fail(e);
-                stateMachine.updateQueryInfo(Optional.empty());
                 throwIfInstanceOf(e, Error.class);
             }
         }

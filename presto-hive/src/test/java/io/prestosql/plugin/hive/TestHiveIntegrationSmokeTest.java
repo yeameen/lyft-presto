@@ -93,6 +93,7 @@ import static io.prestosql.SystemSessionProperties.CONCURRENT_LIFESPANS_PER_NODE
 import static io.prestosql.SystemSessionProperties.DYNAMIC_SCHEDULE_FOR_GROUPED_EXECUTION;
 import static io.prestosql.SystemSessionProperties.GROUPED_EXECUTION;
 import static io.prestosql.SystemSessionProperties.JOIN_DISTRIBUTION_TYPE;
+import static io.prestosql.SystemSessionProperties.QUERY_PARTITION_FILTER_REQUIRED;
 import static io.prestosql.plugin.hive.HiveColumnHandle.BUCKET_COLUMN_NAME;
 import static io.prestosql.plugin.hive.HiveColumnHandle.PATH_COLUMN_NAME;
 import static io.prestosql.plugin.hive.HiveQueryRunner.HIVE_CATALOG;
@@ -231,11 +232,11 @@ public class TestHiveIntegrationSmokeTest
     }
 
     @Test
-    public void testLackOfPartitionFilterNotAllowed() throws Exception
+    public void testLackOfPartitionFilterNotAllowed()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -247,7 +248,7 @@ public class TestHiveIntegrationSmokeTest
                         + "ds varchar)"
                         + "WITH (format='PARQUET', partitioned_by = ARRAY['ds'])");
         assertUpdate(admin, "insert into partition_test(id,a,ds) values(1, 'a','a')", 1);
-        assertQueryFails(admin, "select id from partition_test where a = 'a'", "Filter required on tpch\\.partition_test for at least one partition column.*");
+        assertQueryFails(admin, "select id from partition_test where a = 'a'", "Filter on partition column required.*");
         assertUpdate(admin, "DROP TABLE partition_test");
     }
 
@@ -255,8 +256,8 @@ public class TestHiveIntegrationSmokeTest
     public void testPartitionFilterRemoved()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -276,8 +277,8 @@ public class TestHiveIntegrationSmokeTest
     public void testPartitionFilterIncluded()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -297,8 +298,8 @@ public class TestHiveIntegrationSmokeTest
     public void testPartitionFilterIncluded2()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -318,8 +319,8 @@ public class TestHiveIntegrationSmokeTest
     public void testPartitionFilterInferred()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -349,8 +350,8 @@ public class TestHiveIntegrationSmokeTest
     public void testJoinPartitionedWithMissingPartitionFilter()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
@@ -380,8 +381,8 @@ public class TestHiveIntegrationSmokeTest
     public void testJoinWithPartitionFilterOnPartionedTable()
     {
         Session admin = Session.builder(getQueryRunner().getDefaultSession())
+                .setSystemProperty(QUERY_PARTITION_FILTER_REQUIRED, "true")
                 .setIdentity(new Identity("hive", Optional.empty(), ImmutableMap.of("hive", new SelectedRole(SelectedRole.Type.ROLE, Optional.of("admin")))))
-                .setCatalogSessionProperty("hive", "query_partition_filter_required", "true")
                 .build();
 
         assertUpdate(
