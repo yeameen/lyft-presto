@@ -216,7 +216,6 @@ public class SqlQueryExecution
         Analysis analysis = analyzer.analyze(preparedQuery.getStatement());
 
         stateMachine.setUpdateType(analysis.getUpdateType());
-
         stateMachine.endAnalysis();
 
         return analysis;
@@ -350,6 +349,7 @@ public class SqlQueryExecution
             }
             catch (Throwable e) {
                 fail(e);
+                stateMachine.updateQueryInfo(Optional.empty());
                 throwIfInstanceOf(e, Error.class);
             }
         }

@@ -11,9 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.prestosql.spi.connector;
+package io.prestosql.cli;
 
-public interface ConnectorTableHandle
+class User
 {
-    default void validateScan(ConnectorSession session) {}
+    String accessToken;
+
+    public String getAccessToken()
+    {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken)
+    {
+        this.accessToken = accessToken;
+    }
 }

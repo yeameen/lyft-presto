@@ -14,13 +14,17 @@
 package io.prestosql.cli;
 
 import com.google.common.net.HostAndPort;
+import io.airlift.log.Logger;
 import io.prestosql.client.ClientSession;
 import io.prestosql.client.SocketChannelSocketFactory;
 import io.prestosql.client.StatementClient;
 import okhttp3.OkHttpClient;
+import org.eclipse.jetty.server.Server;
 
+import java.awt.Desktop;
 import java.io.Closeable;
 import java.io.File;
+import java.net.URI;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -47,6 +51,8 @@ public class QueryRunner
     private final OkHttpClient httpClient;
     private final Consumer<OkHttpClient.Builder> sslSetup;
 
+    private static final Logger log = Logger.get(QueryRunner.class);
+
     public QueryRunner(
             ClientSession session,
             boolean debug,
@@ -65,7 +71,8 @@ public class QueryRunner
             Optional<String> kerberosConfigPath,
             Optional<String> kerberosKeytabPath,
             Optional<String> kerberosCredentialCachePath,
-            boolean kerberosUseCanonicalHostname)
+            boolean kerberosUseCanonicalHostname,
+            boolean useOkta)
     {
         this.session = new AtomicReference<>(requireNonNull(session, "session is null"));
         this.debug = debug;
@@ -82,6 +89,7 @@ public class QueryRunner
         setupHttpProxy(builder, httpProxy);
         setupBasicAuth(builder, session, user, password);
         setupTokenAuth(builder, session, accessToken);
+        setupOktaAuth(builder, session, useOkta);
 
         if (kerberosRemoteServiceName.isPresent()) {
             checkArgument(session.getServer().getScheme().equalsIgnoreCase("https"),
@@ -163,6 +171,37 @@ public class QueryRunner
             checkArgument(session.getServer().getScheme().equalsIgnoreCase("https"),
                     "Authentication using an access token requires HTTPS to be enabled");
             clientBuilder.addInterceptor(tokenAuth(accessToken.get()));
+        }
+    }
+
+    private static void setupOktaAuth(
+            OkHttpClient.Builder clientBuilder,
+            ClientSession session,
+            boolean useOkta)
+    {
+        if (useOkta) {
+            log.info("Asking for okta authentication");
+            User user = new User();
+            Server server = new Server(5000);
+            server.setHandler(new LyftOktaAuthenticationHandler(server, user));
+
+            try {
+                server.start();
+
+                // Open browser
+                Desktop desktop = java.awt.Desktop.getDesktop();
+                URI loginUrl = new URI("http://localhost:5000/login");
+                desktop.browse(loginUrl);
+
+                server.join();
+                log.info("Received Access Token. Exiting Jetty Server");
+                log.info("Access Token: " + user.getAccessToken());
+                // TODO: This should set access token
+                setupTokenAuth(clientBuilder, session, Optional.ofNullable(user.getAccessToken()));
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
